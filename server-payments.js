@@ -19,7 +19,7 @@ const readAccounts=()=>{try{return {...defaultAccounts,...JSON.parse(getS.get("p
 const plans={free:{name:"Free",amount:0,env:null},normal:{name:"Normal",amount:50,env:"STRIPE_PRICE_NORMAL"},vip:{name:"VIP",amount:100,env:"STRIPE_PRICE_VIP"}};
 const stripe=process.env.STRIPE_SECRET_KEY?.startsWith("sk_")?new Stripe(process.env.STRIPE_SECRET_KEY):null;
 const configured=v=>Boolean(v&&!/replace_me/i.test(v));
-const token=u=>jwt.sign({id:u.id,email:u.email,role:u.role||"user"},process.env.JWT_SECRET,{expiresIn:"7d"});
+const token=u=>jwt.sign({id:u.id,email:u.email,role:u.role||"user"},process.env.JWT_SECRET,{expiresIn:"30d"});
 const auth=(req,res,next)=>{try{req.user=jwt.verify((req.headers.authorization||"").replace(/^Bearer /,""),process.env.JWT_SECRET);next()}catch{res.status(401).json({error:"Authentication required"})}};
 const isAdmin=(req,res,next)=>req.user?.role==="admin"?next():res.status(403).json({error:"Admin access required"});
 const FREE_LIMIT=10;
