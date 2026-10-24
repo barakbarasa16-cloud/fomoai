@@ -1,1 +1,109 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FOMOAI Account</title><link rel="stylesheet" href="/style.css"></head><body><header><a class="brand" href="/">FOMO<i>AI</i></a></header><main class="section login"><div class="loginbox"><span class="eyebrow">ACCOUNT</span><h1 id="title">Login</h1><input id="name" placeholder="Name" style="display:none"><input id="email" type="email" placeholder="Email"><input id="password" type="password" placeholder="Password (8+ characters)"><select id="plan" style="display:none"><option value="normal">Normal — $50</option><option value="vip">VIP — $100</option></select><button class="btn primary" id="submit">Login</button><button class="btn ghost" id="toggle">Create account</button><p id="msg" class="muted"></p></div></main><script>let reg=false;const $=x=>document.querySelector(x);toggle.onclick=()=>{reg=!reg;title.textContent=reg?"Create account":"Login";submit.textContent=reg?"Register":"Login";name.style.display=reg?"block":"none";plan.style.display=reg?"block":"none";toggle.textContent=reg?"Back to login":"Create account"};submit.onclick=async()=>{try{const b={email:email.value,password:password.value};if(reg){b.name=name.value;b.plan=plan.value}const r=await fetch(reg?"/api/register":"/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}),j=await r.json();if(!r.ok)throw Error(j.error);localStorage.setItem("fomoToken",j.token);location.href=new URLSearchParams(location.search).get("next")||"/"}catch(e){msg.textContent=e.message}};</script></body></html>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FOMOAI Account</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header><a class="brand" href="/">FOMO<i>AI</i></a></header>
+  <main class="section login">
+    <div class="loginbox">
+      <span class="eyebrow">ACCOUNT</span>
+      <h1 id="title">Login</h1>
+
+      <div id="nameWrap" style="display:none">
+        <label for="name">Full name</label>
+        <input id="name" placeholder="Your name" autocomplete="name">
+      </div>
+
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="Email" autocomplete="email">
+
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Password (8+ characters)" autocomplete="current-password">
+
+      <div id="planWrap" style="display:none">
+        <label for="plan">Membership plan</label>
+        <select id="plan">
+          <option value="normal">Normal — $50</option>
+          <option value="vip">VIP — $100</option>
+        </select>
+      </div>
+
+      <button class="btn primary" id="submit" type="button">Login</button>
+      <button class="btn ghost" id="toggle" type="button">Create account</button>
+      <p id="msg" class="muted"></p>
+    </div>
+  </main>
+
+  <script>
+    const title = document.querySelector('#title');
+    const nameWrap = document.querySelector('#nameWrap');
+    const nameInput = document.querySelector('#name');
+    const emailInput = document.querySelector('#email');
+    const passwordInput = document.querySelector('#password');
+    const planWrap = document.querySelector('#planWrap');
+    const planInput = document.querySelector('#plan');
+    const submit = document.querySelector('#submit');
+    const toggle = document.querySelector('#toggle');
+    const msg = document.querySelector('#msg');
+    let registering = false;
+
+    function setMessage(text, error = true) {
+      msg.textContent = text;
+      msg.style.color = error ? '#ff7887' : '#58e6b1';
+    }
+
+    toggle.addEventListener('click', () => {
+      registering = !registering;
+      title.textContent = registering ? 'Create account' : 'Login';
+      submit.textContent = registering ? 'Register' : 'Login';
+      toggle.textContent = registering ? 'Back to login' : 'Create account';
+      nameWrap.style.display = registering ? 'grid' : 'none';
+      planWrap.style.display = registering ? 'grid' : 'none';
+      passwordInput.autocomplete = registering ? 'new-password' : 'current-password';
+      msg.textContent = '';
+    });
+
+    submit.addEventListener('click', async () => {
+      msg.textContent = '';
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !email.includes('@')) return setMessage('Enter a valid email address.');
+      if (password.length < 8) return setMessage('Password must be at least 8 characters.');
+
+      const body = { email, password };
+      if (registering) {
+        const name = nameInput.value.trim();
+        if (name.length < 2) return setMessage('Enter your name.');
+        body.name = name;
+        body.plan = planInput.value;
+      }
+
+      submit.disabled = true;
+      submit.textContent = registering ? 'Creating account...' : 'Logging in...';
+
+      try {
+        const response = await fetch(registering ? '/api/register' : '/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Request failed. Please try again.');
+        if (!data.token) throw new Error('Account created, but no login token was returned.');
+        localStorage.setItem('fomoToken', data.token);
+        setMessage(registering ? 'Account created successfully.' : 'Login successful.', false);
+        window.location.href = new URLSearchParams(window.location.search).get('next') || '/';
+      } catch (error) {
+        setMessage(error.message || 'Unable to continue.');
+        submit.disabled = false;
+        submit.textContent = registering ? 'Register' : 'Login';
+      }
+    });
+  </script>
+</body>
+</html>
