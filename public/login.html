@@ -14,16 +14,18 @@
       <h1 id="title">Login</h1>
 
       <div id="loginView">
+        <p class="muted">Create a free account and get <b>10 free scanner uses</b>. No payment is required to start.</p>
         <label for="loginEmail">Email</label>
         <input id="loginEmail" type="email" placeholder="Email" autocomplete="email">
         <label for="loginPassword">Password</label>
         <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
         <button class="btn primary" id="loginSubmit" type="button">Login</button>
         <button class="btn ghost" id="forgotBtn" type="button">Forgot password?</button>
-        <button class="btn ghost" id="registerBtn" type="button">Create account</button>
+        <button class="btn ghost" id="registerBtn" type="button">Create free account</button>
       </div>
 
       <div id="registerView" style="display:none">
+        <p class="muted">Start free with <b>10 scanner uses</b>. Upgrade to Normal ($50) or VIP ($100) after the free uses are finished.</p>
         <label for="name">Full name</label>
         <input id="name" placeholder="Your name" autocomplete="name">
         <label for="registerEmail">Email</label>
@@ -32,10 +34,11 @@
         <input id="registerPassword" type="password" placeholder="Password (8+ characters)" autocomplete="new-password">
         <label for="plan">Membership plan</label>
         <select id="plan">
+          <option value="free">Free — 10 uses</option>
           <option value="normal">Normal — $50</option>
           <option value="vip">VIP — $100</option>
         </select>
-        <button class="btn primary" id="registerSubmit" type="button">Register</button>
+        <button class="btn primary" id="registerSubmit" type="button">Create account</button>
         <button class="btn ghost" id="backLoginBtn" type="button">Back to login</button>
       </div>
 
@@ -68,7 +71,7 @@
     const loginView=document.querySelector('#loginView'),registerView=document.querySelector('#registerView'),forgotView=document.querySelector('#forgotView'),resetView=document.querySelector('#resetView');
     const loginSubmit=document.querySelector('#loginSubmit'),registerSubmit=document.querySelector('#registerSubmit'),sendCodeBtn=document.querySelector('#sendCodeBtn'),resetBtn=document.querySelector('#resetBtn');
     function message(text,error=true){msg.textContent=text;msg.style.color=error?'#ff7887':'#58e6b1'}
-    function view(name){loginView.style.display=name==='login'?'block':'none';registerView.style.display=name==='register'?'block':'none';forgotView.style.display=name==='forgot'?'block':'none';resetView.style.display=name==='reset'?'block':'none';title.textContent=name==='login'?'Login':name==='register'?'Create account':name==='forgot'?'Forgot password':'Reset password';msg.textContent=''}
+    function view(name){loginView.style.display=name==='login'?'block':'none';registerView.style.display=name==='register'?'block':'none';forgotView.style.display=name==='forgot'?'block':'none';resetView.style.display=name==='reset'?'block':'none';title.textContent=name==='login'?'Login':name==='register'?'Create free account':name==='forgot'?'Forgot password':'Reset password';msg.textContent=''}
     async function post(url,body){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed. Please try again.');return d}
     document.querySelector('#registerBtn').onclick=()=>view('register');
     document.querySelector('#backLoginBtn').onclick=()=>view('login');
@@ -76,7 +79,7 @@
     document.querySelector('#forgotBackBtn').onclick=()=>view('login');
     document.querySelector('#resetBackBtn').onclick=()=>view('login');
     loginSubmit.onclick=async()=>{const email=document.querySelector('#loginEmail').value.trim(),password=document.querySelector('#loginPassword').value;if(!email||!email.includes('@'))return message('Enter a valid email address.');if(password.length<8)return message('Password must be at least 8 characters.');loginSubmit.disabled=true;loginSubmit.textContent='Logging in...';try{const d=await post('/api/login',{email,password});localStorage.setItem('fomoToken',d.token);window.location.href=new URLSearchParams(location.search).get('next')||'/'}catch(e){message(e.message);loginSubmit.disabled=false;loginSubmit.textContent='Login'}};
-    registerSubmit.onclick=async()=>{const name=document.querySelector('#name').value.trim(),email=document.querySelector('#registerEmail').value.trim(),password=document.querySelector('#registerPassword').value,plan=document.querySelector('#plan').value;if(name.length<2)return message('Enter your name.');if(!email||!email.includes('@'))return message('Enter a valid email address.');if(password.length<8)return message('Password must be at least 8 characters.');registerSubmit.disabled=true;registerSubmit.textContent='Creating account...';try{const d=await post('/api/register',{name,email,password,plan});localStorage.setItem('fomoToken',d.token);message('Account created successfully.',false);setTimeout(()=>window.location.href=new URLSearchParams(location.search).get('next')||'/',500)}catch(e){message(e.message);registerSubmit.disabled=false;registerSubmit.textContent='Register'}};
+    registerSubmit.onclick=async()=>{const name=document.querySelector('#name').value.trim(),email=document.querySelector('#registerEmail').value.trim(),password=document.querySelector('#registerPassword').value,plan=document.querySelector('#plan').value;if(name.length<2)return message('Enter your name.');if(!email||!email.includes('@'))return message('Enter a valid email address.');if(password.length<8)return message('Password must be at least 8 characters.');registerSubmit.disabled=true;registerSubmit.textContent='Creating account...';try{const d=await post('/api/register',{name,email,password,plan});localStorage.setItem('fomoToken',d.token);message(plan==='free'?'Free account created. You have 10 scanner uses.':'Account created successfully.',false);setTimeout(()=>window.location.href=new URLSearchParams(location.search).get('next')||'/',700)}catch(e){message(e.message);registerSubmit.disabled=false;registerSubmit.textContent='Create account'}};
     sendCodeBtn.onclick=async()=>{const email=document.querySelector('#forgotEmail').value.trim();if(!email||!email.includes('@'))return message('Enter a valid email address.');sendCodeBtn.disabled=true;sendCodeBtn.textContent='Sending...';try{await post('/api/forgot-password',{email});document.querySelector('#resetEmail').value=email;view('reset');message('If the account exists, a reset code has been sent to your email.',false)}catch(e){message(e.message);sendCodeBtn.disabled=false;sendCodeBtn.textContent='Send reset code'}};
     resetBtn.onclick=async()=>{const email=document.querySelector('#resetEmail').value.trim(),code=document.querySelector('#resetCode').value.trim(),password=document.querySelector('#newPassword').value;if(!/^[0-9]{6}$/.test(code))return message('Enter the 6-digit reset code.');if(password.length<8)return message('New password must be at least 8 characters.');resetBtn.disabled=true;resetBtn.textContent='Changing password...';try{await post('/api/reset-password',{email,code,password});message('Password changed successfully. You can now log in.',false);setTimeout(()=>view('login'),1200)}catch(e){message(e.message);resetBtn.disabled=false;resetBtn.textContent='Change password'}};
   </script>
