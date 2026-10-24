@@ -39,3 +39,35 @@ body{
 .fact,.review-box,.pill{background:rgba(8,52,59,.8)}
 .section{border-top-color:#164c4e}
 footer{border-top-color:#164c4e}
+
+
+/* Polished mobile-first account experience */
+.account-page{min-height:100vh;background:radial-gradient(ellipse at 12% 20%,rgba(0,211,142,.17),transparent 42%),radial-gradient(ellipse at 90% 42%,rgba(37,111,255,.2),transparent 43%),linear-gradient(145deg,#041914 0%,#07182b 56%,#06111e 100%);background-attachment:fixed}
+.account-header{height:72px;padding:0 clamp(18px,5vw,64px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(91,220,190,.15);background:rgba(3,18,25,.62);backdrop-filter:blur(16px)}
+.account-header .brand{font-size:25px;letter-spacing:-1.5px}
+.account-header .brand i{color:#4ce6b0;font-style:normal}
+.account-home{font-size:13px;font-weight:700;color:#b7d8d4;padding:10px 13px;border:1px solid rgba(130,209,199,.22);border-radius:12px;transition:.2s}
+.account-home:hover{background:rgba(45,207,161,.1);border-color:#35cba2}
+.account-main{width:100%;min-height:calc(100vh - 72px);display:flex;align-items:flex-start;justify-content:center;padding:clamp(32px,8vh,76px) 18px 50px}
+.loginbox{width:100%;max-width:460px;margin:0 auto;padding:clamp(24px,5vw,38px);border:1px solid rgba(126,211,198,.22);border-radius:24px;background:linear-gradient(145deg,rgba(8,37,36,.92),rgba(8,25,48,.94));box-shadow:0 24px 80px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.045);backdrop-filter:blur(18px)}
+.account-mark{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;margin-bottom:18px;font-size:25px;color:#05251e;background:linear-gradient(135deg,#62f0b8,#53b6ff);box-shadow:0 8px 28px rgba(45,220,173,.2)}
+.account-kicker{font-size:10px;letter-spacing:.2em;font-weight:900;color:#63e7b6;margin:0 0 8px}
+.loginbox .eyebrow{display:block;font-size:10px;letter-spacing:.18em;color:#82a9b8;font-weight:800;margin-bottom:8px}
+.loginbox h1{font-size:clamp(30px,7vw,38px);line-height:1.15;letter-spacing:-1.2px;margin:0 0 13px}
+.loginbox .muted{color:#a8bdc7;font-size:14px;line-height:1.65;margin:0 0 24px}
+.loginbox .intro-copy b{color:#75f0bd}
+.loginbox label{display:block;font-size:12px;font-weight:750;color:#d9e9e9;margin:17px 0 8px}
+.loginbox input,.loginbox select{display:block;width:100%;min-height:48px;padding:13px 14px;border:1px solid #31545b;border-radius:12px;background:rgba(3,18,31,.8);color:#f3fbff;outline:none;transition:border-color .18s,box-shadow .18s,background .18s}
+.loginbox input::placeholder{color:#6e8994}
+.loginbox input:focus,.loginbox select:focus{border-color:#42d9ae;box-shadow:0 0 0 3px rgba(53,219,171,.12);background:rgba(3,23,34,.98)}
+.loginbox button.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;transition:transform .15s,filter .15s,border-color .15s}
+.loginbox button.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.loginbox button.btn:disabled{opacity:.6;cursor:wait;transform:none}
+.loginbox button.primary{display:flex;width:100%;margin-top:22px;color:#03241d;border:0;background:linear-gradient(100deg,#65f0b8,#5cc8ee);box-shadow:0 9px 24px rgba(48,210,165,.15)}
+.loginbox button.ghost{background:rgba(8,43,48,.58);border:1px solid rgba(117,180,183,.23);color:#c8e0e2}
+#forgotBtn{display:flex;width:100%;margin-top:10px;background:transparent;border-color:transparent;color:#9dc9d0}
+#registerBtn,#backLoginBtn,#forgotBackBtn,#resetBackBtn{display:flex;width:100%;margin-top:8px}
+#msg{min-height:0;margin:15px 0 0;font-size:13px}
+#msg:empty{display:none}
+@media(min-width:760px){.account-main{align-items:center;padding-top:42px;padding-bottom:64px}.loginbox{max-width:450px}}
+@media(max-width:420px){.account-header{height:64px;padding:0 15px}.account-header .brand{font-size:23px}.account-home{font-size:11px;padding:9px 10px}.account-main{min-height:calc(100vh - 64px);padding:28px 14px 38px}.loginbox{border-radius:20px;padding:23px 19px}.loginbox h1{font-size:31px}}
