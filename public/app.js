@@ -93,3 +93,33 @@ function render(){
 $("#refresh").onclick=loadUniverse;
 ["q","chain","sig","sort"].forEach(id=>$("#"+id).addEventListener("input",render));
 loadUniverse();
+
+function setupFor(x){
+  const p=x.priceUsd;
+  const buy=x.buyPressure;
+  const quality=Math.max(0,Math.min(100,Math.round(38+x.momentum*.35+x.fomo*.18+Math.min(18,Math.log10(Math.max(x.liquidityUsd,1))*2)+(buy-50)*.25-(x.risk==="Very High"?24:x.risk==="High"?12:0))));
+  const tradable=x.signal==="Bullish"&&x.momentum>=68&&x.fomo>=58&&buy>=55&&x.liquidityUsd>=50000&&x.change24h>0;
+  const entryLow=p*(x.momentum>=78?0.985:0.97), entryHigh=p*(x.momentum>=78?1.005:1.015);
+  const stop=p*(x.risk==="Lower"?0.93:x.risk==="Medium"?0.91:0.88);
+  const tp1=p*1.10,tp2=p*1.20,tp3=p*1.35;
+  const action=tradable?"ENTRY WATCH":"WAIT / NO ENTRY";
+  const reasons=[...x.reasons];
+  if(x.liquidityUsd>=250000)reasons.push("liquidity is comparatively strong");
+  if(x.liquidityUsd<50000)reasons.push("liquidity is too thin for an entry screen");
+  if(x.ageHours!=null&&x.ageHours<1)reasons.push("very new pair: extra launch risk");
+  if(x.sells>x.buys)reasons.push("sells currently exceed buys");
+  return {...x,quality,tradable,action,entryLow,entryHigh,stop,tp1,tp2,tp3,reasons:[...new Set(reasons)].slice(0,4)};
+}
+
+function renderTradeSetups(){
+  const grid=$("#setupGrid"), next=$("#nextReview");
+  if(!grid||!data.length)return;
+  const ranked=data.map(setupFor).sort((a,b)=>((b.tradable?1000:0)+b.quality+b.momentum+b.fomo)-((a.tradable?1000:0)+a.quality+a.momentum+a.fomo)).slice(0,3);
+  const now=new Date();
+  const review=new Date(now.getTime()+15*60000);
+  if(next)next.textContent=review.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  grid.innerHTML=ranked.map(x=>`<div class="card"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><span class="eyebrow">${x.tradable?"TRADE CANDIDATE":"RISK FILTER"}</span><h3>${esc(x.name)} <span class="muted">${esc(x.symbol)}</span></h3><p class="muted">${esc(x.chain)} · Quality ${x.quality}/100 · ${x.confidence}% model confidence</p></div><b class="${x.tradable?'green':'yellow'}">${esc(x.action)}</b></div><div class="statline"><span>Current</span><b>${price(x.priceUsd)}</b></div><div class="statline"><span>Entry zone</span><b>${price(x.entryLow)} – ${price(x.entryHigh)}</b></div><div class="statline"><span>Stop / invalidation</span><b class="red">${price(x.stop)}</b></div><div class="statline"><span>TP1 / TP2 / TP3</span><b>${price(x.tp1)} / ${price(x.tp2)} / ${price(x.tp3)}</b></div><div class="statline"><span>Buy pressure</span><b>${x.buyPressure}%</b></div><p><b>Legit screen:</b> ${x.liquidityUsd>=50000?"PASS — sufficient public liquidity for this screen":"FAIL — thin liquidity"}; contract/honeypot/security checks remain <b>unverified</b>.</p><p class="muted"><b>Why:</b> ${esc(x.reasons.join(" · "))}</p><p class="muted"><b>Exit rule:</b> close if price hits invalidation, momentum falls below 55, or selling pressure overtakes buyers. Take partial profit at TP1/TP2 rather than waiting for a guaranteed clock time.</p><a href="${esc(x.url||"#")}" target="_blank" rel="noopener" class="green">Open live pair ↗</a></div>`).join("");
+}
+
+setInterval(renderTradeSetups,1000);
+renderTradeSetups();
