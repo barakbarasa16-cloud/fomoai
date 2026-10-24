@@ -20,7 +20,18 @@ function scorePair(x){
   const risk=liq<1e4?"Very High":liq<5e4?"High":liq<2.5e5?"Medium":"Lower";
   const signal=liq<5e4?"High Risk":momentum>=68?"Bullish":momentum<=38?"Bearish":"Watch";
   const age=x.pairCreatedAt?Math.max(0,(Date.now()-Number(x.pairCreatedAt))/3600000):null;
-  return {name:x.baseToken?.name||"Unknown",symbol:x.baseToken?.symbol||"?",chain:x.chainId,address:x.baseToken?.address||"",url:x.url,priceUsd:Number(x.priceUsd||0),change24h:ch,volume24h:vol,liquidityUsd:liq,marketCap:Number(x.marketCap||x.fdv||0),buys,sells,txns:total,momentum,fomo,risk,signal,ageHours:age,boost:Number(x.boosts?.active||0),image:x.info?.imageUrl||""};
+  const buyPressure=Math.round(ratio*100);
+  const confidence=Math.max(52,Math.min(94,Math.round(50+Math.abs(momentum-50)*0.65+Math.min(15,Math.abs(ch))*0.8+(liq>=5e4?6:0))));
+  let reasons=[];
+  if(ch>=8) reasons.push("strong 24h price expansion"); else if(ch<=-8) reasons.push("weakening 24h price action");
+  if(buyPressure>=58) reasons.push("buyers dominate sellers"); else if(buyPressure<=42) reasons.push("selling pressure dominates");
+  if(vol>liq*2&&liq>0) reasons.push("volume is large relative to liquidity");
+  if(vol<liq*.25&&liq>0) reasons.push("volume is still light versus liquidity");
+  if(txBoost>=9) reasons.push("transaction activity is elevated");
+  if(liq<5e4) reasons.push("thin liquidity increases execution risk");
+  if(!reasons.length) reasons.push("mixed momentum and market activity");
+  const prediction=signal==="Bullish"?"Bullish":signal==="Bearish"?"Bearish":signal==="High Risk"?"High Risk / Unclear":"Watch";
+  return {name:x.baseToken?.name||"Unknown",symbol:x.baseToken?.symbol||"?",chain:x.chainId,address:x.baseToken?.address||"",url:x.url,priceUsd:Number(x.priceUsd||0),change24h:ch,volume24h:vol,liquidityUsd:liq,marketCap:Number(x.marketCap||x.fdv||0),buys,sells,txns:total,momentum,fomo,risk,signal,prediction,confidence,buyPressure,reasons,ageHours:age,boost:Number(x.boosts?.active||0),image:x.info?.imageUrl||""};
 }
 
 async function json(url){const r=await fetch(url,{headers:{Accept:"application/json"}});if(!r.ok)throw Error("Data source returned "+r.status);return r.json()}
@@ -28,25 +39,22 @@ async function json(url){const r=await fetch(url,{headers:{Accept:"application/j
 async function loadUniverse(){
   const t=token();
   if(!t){$("#status").innerHTML='Please <a class="green" href="/login.html?next=%2F">log in</a> or create a free account to use the scanner. You get <b>10 free uses</b>.';return}
-  $("#status").textContent="Scanning the multi-chain memecoin universe…";
+  $("#status").textContent="Scanning the multi-chain memecoin universe and building intelligence signals…";
   try{
     const gate=await fetch("/api/market?q=meme",{headers:{Authorization:"Bearer "+t}}), gateJson=await gate.json();
     if(gate.status===401){localStorage.removeItem("fomoToken");location.href="/login.html?next=%2F";return}
     if(gate.status===402){$("#status").innerHTML=`<b>${esc(gateJson.error||"Your free uses are finished.")}</b> <a class="green" href="/pricing.html">Choose Normal ($50) or VIP ($100)</a>`;return}
     if(!gate.ok)throw Error(gateJson.error||"Scanner access unavailable");
-
     const [boosts,profiles,...searchResults]=await Promise.all([
       json(DEX+"/token-boosts/latest/v1").catch(()=>[]),
       json(DEX+"/token-profiles/latest/v1").catch(()=>[]),
       ...SEARCHES.map(q=>json(DEX+"/latest/dex/search?q="+encodeURIComponent(q)).catch(()=>({pairs:[]})))
     ]);
-
     const byKey=new Map();
     const add=(x,source)=>{if(!x?.chainId||!x?.tokenAddress)return;const k=x.chainId+":"+x.tokenAddress.toLowerCase();const old=byKey.get(k);byKey.set(k,{chainId:x.chainId,tokenAddress:x.tokenAddress,url:x.url||old?.url,boost:Math.max(Number(x.amount||0),Number(old?.boost||0)),source:source||old?.source});};
     (Array.isArray(boosts)?boosts:[]).forEach(x=>add(x,"boost"));
     (Array.isArray(profiles)?profiles:[]).forEach(x=>add(x,"profile"));
     searchResults.forEach(r=>(r?.pairs||[]).forEach(x=>add({chainId:x.chainId,tokenAddress:x.baseToken?.address,url:x.url},"search")));
-
     const groups={};
     for(const x of byKey.values())(groups[x.chainId]??=[]).push(x.tokenAddress);
     const enriched=[];
@@ -63,13 +71,12 @@ async function loadUniverse(){
         if(i+25<addresses.length)await sleep(80);
       }
     }
-
     const fallback=(gateJson.pairs||[]).map(x=>scorePair(x));
     const merged=new Map();
     [...enriched,...fallback].forEach(x=>{const k=x.chain+":"+x.address.toLowerCase();const old=merged.get(k);if(!old||x.volume24h>old.volume24h)merged.set(k,x)});
     data=[...merged.values()].filter(x=>x.priceUsd>0).sort((a,b)=>b.fomo-a.fomo).slice(0,500);
     if(!data.length)throw Error("No live token data was returned");
-    $("#status").innerHTML=(gateJson.paid?"Unlimited membership access":"Free uses remaining: <b>"+esc(gateJson.freeRemaining)+" / 10</b>")+` · <b>${data.length}</b> live candidates · multi-chain discovery · Updated ${new Date().toLocaleTimeString()}`;
+    $("#status").innerHTML=(gateJson.paid?"Unlimited membership access":"Free uses remaining: <b>"+esc(gateJson.freeRemaining)+" / 10</b>")+` · <b>${data.length}</b> live candidates · evidence-based intelligence · Updated ${new Date().toLocaleTimeString()}`;
     $("#chain").innerHTML='<option value="">All chains</option>'+[...new Set(data.map(x=>x.chain))].sort().map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
     render();
   }catch(e){console.error(e);$("#status").textContent=e.message||"Market feed unavailable"}
@@ -80,7 +87,7 @@ function render(){
   let a=data.filter(x=>(!q||(x.name+x.symbol+x.address).toLowerCase().includes(q))&&(!c||x.chain===c)&&(!s||x.signal===s));
   a.sort((x,y)=>sort==="momentum"?y.momentum-x.momentum:sort==="volume"?y.volume24h-x.volume24h:sort==="change"?y.change24h-x.change24h:y.fomo-x.fomo);
   $("#count").textContent=a.length;$("#bull").textContent=a.filter(x=>x.signal==="Bullish").length;$("#fomo").textContent=a.filter(x=>x.fomo>=70).length;$("#risk").textContent=a.filter(x=>x.risk==="High"||x.risk==="Very High").length;
-  $("#rows").innerHTML=a.slice(0,500).map(x=>`<tr><td><b>${esc(x.name)}</b> <span class="muted">${esc(x.symbol)}</span><br><small class="muted">${esc(x.address.slice(0,6))}…${esc(x.address.slice(-4))}</small><br><a href="${esc(x.url||"#")}" target="_blank" rel="noopener" class="green">View pair ↗</a></td><td>${esc(x.chain)}</td><td>${price(x.priceUsd)}</td><td class="${x.change24h>=0?'green':'red'}">${x.change24h>=0?'+':''}${x.change24h.toFixed(2)}%</td><td>${money(x.volume24h)}</td><td>${money(x.liquidityUsd)}</td><td>${money(x.marketCap)}</td><td><b>${x.fomo}</b></td><td><b>${x.momentum}</b></td><td class="${x.signal==='Bullish'?'green':x.signal==='High Risk'?'red':'yellow'}"><b>${esc(x.signal)}</b><br><small>${esc(x.risk)}${x.ageHours!=null?" · "+(x.ageHours<1?"<1h":x.ageHours<24?x.ageHours.toFixed(1)+"h":(x.ageHours/24).toFixed(1)+"d"):""}</small></td></tr>`).join("")||'<tr><td colspan="10">No matches.</td></tr>';
+  $("#rows").innerHTML=a.slice(0,500).map(x=>`<tr><td><b>${esc(x.name)}</b> <span class="muted">${esc(x.symbol)}</span><br><small class="muted">${esc(x.address.slice(0,6))}…${esc(x.address.slice(-4))}</small><br><a href="${esc(x.url||"#")}" target="_blank" rel="noopener" class="green">View pair ↗</a></td><td>${esc(x.chain)}</td><td>${price(x.priceUsd)}</td><td class="${x.change24h>=0?'green':'red'}">${x.change24h>=0?'+':''}${x.change24h.toFixed(2)}%</td><td>${money(x.volume24h)}</td><td>${money(x.liquidityUsd)}</td><td>${money(x.marketCap)}</td><td><b>${x.fomo}</b></td><td><b>${x.momentum}</b></td><td class="${x.signal==='Bullish'?'green':x.signal==='High Risk'?'red':'yellow'}"><b>${esc(x.prediction)}</b><br><small>${x.confidence}% confidence · ${esc(x.risk)}</small><br><small title="${esc(x.reasons.join('; '))}">${esc(x.reasons.slice(0,2).join(' · '))}</small></td></tr>`).join("")||'<tr><td colspan="10">No matches.</td></tr>';
 }
 
 $("#refresh").onclick=loadUniverse;
