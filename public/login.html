@@ -13,97 +13,72 @@
       <span class="eyebrow">ACCOUNT</span>
       <h1 id="title">Login</h1>
 
-      <div id="nameWrap" style="display:none">
-        <label for="name">Full name</label>
-        <input id="name" placeholder="Your name" autocomplete="name">
+      <div id="loginView">
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" type="email" placeholder="Email" autocomplete="email">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+        <button class="btn primary" id="loginSubmit" type="button">Login</button>
+        <button class="btn ghost" id="forgotBtn" type="button">Forgot password?</button>
+        <button class="btn ghost" id="registerBtn" type="button">Create account</button>
       </div>
 
-      <label for="email">Email</label>
-      <input id="email" type="email" placeholder="Email" autocomplete="email">
-
-      <label for="password">Password</label>
-      <input id="password" type="password" placeholder="Password (8+ characters)" autocomplete="current-password">
-
-      <div id="planWrap" style="display:none">
+      <div id="registerView" style="display:none">
+        <label for="name">Full name</label>
+        <input id="name" placeholder="Your name" autocomplete="name">
+        <label for="registerEmail">Email</label>
+        <input id="registerEmail" type="email" placeholder="Email" autocomplete="email">
+        <label for="registerPassword">Password</label>
+        <input id="registerPassword" type="password" placeholder="Password (8+ characters)" autocomplete="new-password">
         <label for="plan">Membership plan</label>
         <select id="plan">
           <option value="normal">Normal — $50</option>
           <option value="vip">VIP — $100</option>
         </select>
+        <button class="btn primary" id="registerSubmit" type="button">Register</button>
+        <button class="btn ghost" id="backLoginBtn" type="button">Back to login</button>
       </div>
 
-      <button class="btn primary" id="submit" type="button">Login</button>
-      <button class="btn ghost" id="toggle" type="button">Create account</button>
+      <div id="forgotView" style="display:none">
+        <p class="muted">Enter your registered email. We'll send you a 6-digit code.</p>
+        <label for="forgotEmail">Email</label>
+        <input id="forgotEmail" type="email" placeholder="Your registered email" autocomplete="email">
+        <button class="btn primary" id="sendCodeBtn" type="button">Send reset code</button>
+        <button class="btn ghost" id="forgotBackBtn" type="button">Back to login</button>
+      </div>
+
+      <div id="resetView" style="display:none">
+        <p class="muted">Enter the 6-digit code sent to your email and choose a new password.</p>
+        <label for="resetEmail">Email</label>
+        <input id="resetEmail" type="email" placeholder="Your registered email" autocomplete="email">
+        <label for="resetCode">Reset code</label>
+        <input id="resetCode" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code">
+        <label for="newPassword">New password</label>
+        <input id="newPassword" type="password" placeholder="New password (8+ characters)" autocomplete="new-password">
+        <button class="btn primary" id="resetBtn" type="button">Change password</button>
+        <button class="btn ghost" id="resetBackBtn" type="button">Back to login</button>
+      </div>
+
       <p id="msg" class="muted"></p>
     </div>
   </main>
 
   <script>
-    const title = document.querySelector('#title');
-    const nameWrap = document.querySelector('#nameWrap');
-    const nameInput = document.querySelector('#name');
-    const emailInput = document.querySelector('#email');
-    const passwordInput = document.querySelector('#password');
-    const planWrap = document.querySelector('#planWrap');
-    const planInput = document.querySelector('#plan');
-    const submit = document.querySelector('#submit');
-    const toggle = document.querySelector('#toggle');
-    const msg = document.querySelector('#msg');
-    let registering = false;
-
-    function setMessage(text, error = true) {
-      msg.textContent = text;
-      msg.style.color = error ? '#ff7887' : '#58e6b1';
-    }
-
-    toggle.addEventListener('click', () => {
-      registering = !registering;
-      title.textContent = registering ? 'Create account' : 'Login';
-      submit.textContent = registering ? 'Register' : 'Login';
-      toggle.textContent = registering ? 'Back to login' : 'Create account';
-      nameWrap.style.display = registering ? 'grid' : 'none';
-      planWrap.style.display = registering ? 'grid' : 'none';
-      passwordInput.autocomplete = registering ? 'new-password' : 'current-password';
-      msg.textContent = '';
-    });
-
-    submit.addEventListener('click', async () => {
-      msg.textContent = '';
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      if (!email || !email.includes('@')) return setMessage('Enter a valid email address.');
-      if (password.length < 8) return setMessage('Password must be at least 8 characters.');
-
-      const body = { email, password };
-      if (registering) {
-        const name = nameInput.value.trim();
-        if (name.length < 2) return setMessage('Enter your name.');
-        body.name = name;
-        body.plan = planInput.value;
-      }
-
-      submit.disabled = true;
-      submit.textContent = registering ? 'Creating account...' : 'Logging in...';
-
-      try {
-        const response = await fetch(registering ? '/api/register' : '/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || 'Request failed. Please try again.');
-        if (!data.token) throw new Error('Account created, but no login token was returned.');
-        localStorage.setItem('fomoToken', data.token);
-        setMessage(registering ? 'Account created successfully.' : 'Login successful.', false);
-        window.location.href = new URLSearchParams(window.location.search).get('next') || '/';
-      } catch (error) {
-        setMessage(error.message || 'Unable to continue.');
-        submit.disabled = false;
-        submit.textContent = registering ? 'Register' : 'Login';
-      }
-    });
+    const title=document.querySelector('#title'),msg=document.querySelector('#msg');
+    const loginView=document.querySelector('#loginView'),registerView=document.querySelector('#registerView'),forgotView=document.querySelector('#forgotView'),resetView=document.querySelector('#resetView');
+    const loginSubmit=document.querySelector('#loginSubmit'),registerSubmit=document.querySelector('#registerSubmit'),sendCodeBtn=document.querySelector('#sendCodeBtn'),resetBtn=document.querySelector('#resetBtn');
+    function message(text,error=true){msg.textContent=text;msg.style.color=error?'#ff7887':'#58e6b1'}
+    function view(name){loginView.style.display=name==='login'?'block':'none';registerView.style.display=name==='register'?'block':'none';forgotView.style.display=name==='forgot'?'block':'none';resetView.style.display=name==='reset'?'block':'none';title.textContent=name==='login'?'Login':name==='register'?'Create account':name==='forgot'?'Forgot password':'Reset password';msg.textContent=''}
+    async function post(url,body){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed. Please try again.');return d}
+    document.querySelector('#registerBtn').onclick=()=>view('register');
+    document.querySelector('#backLoginBtn').onclick=()=>view('login');
+    document.querySelector('#forgotBtn').onclick=()=>view('forgot');
+    document.querySelector('#forgotBackBtn').onclick=()=>view('login');
+    document.querySelector('#resetBackBtn').onclick=()=>view('login');
+    loginSubmit.onclick=async()=>{const email=document.querySelector('#loginEmail').value.trim(),password=document.querySelector('#loginPassword').value;if(!email||!email.includes('@'))return message('Enter a valid email address.');if(password.length<8)return message('Password must be at least 8 characters.');loginSubmit.disabled=true;loginSubmit.textContent='Logging in...';try{const d=await post('/api/login',{email,password});localStorage.setItem('fomoToken',d.token);window.location.href=new URLSearchParams(location.search).get('next')||'/'}catch(e){message(e.message);loginSubmit.disabled=false;loginSubmit.textContent='Login'}};
+    registerSubmit.onclick=async()=>{const name=document.querySelector('#name').value.trim(),email=document.querySelector('#registerEmail').value.trim(),password=document.querySelector('#registerPassword').value,plan=document.querySelector('#plan').value;if(name.length<2)return message('Enter your name.');if(!email||!email.includes('@'))return message('Enter a valid email address.');if(password.length<8)return message('Password must be at least 8 characters.');registerSubmit.disabled=true;registerSubmit.textContent='Creating account...';try{const d=await post('/api/register',{name,email,password,plan});localStorage.setItem('fomoToken',d.token);message('Account created successfully.',false);setTimeout(()=>window.location.href=new URLSearchParams(location.search).get('next')||'/',500)}catch(e){message(e.message);registerSubmit.disabled=false;registerSubmit.textContent='Register'}};
+    sendCodeBtn.onclick=async()=>{const email=document.querySelector('#forgotEmail').value.trim();if(!email||!email.includes('@'))return message('Enter a valid email address.');sendCodeBtn.disabled=true;sendCodeBtn.textContent='Sending...';try{await post('/api/forgot-password',{email});document.querySelector('#resetEmail').value=email;view('reset');message('If the account exists, a reset code has been sent to your email.',false)}catch(e){message(e.message);sendCodeBtn.disabled=false;sendCodeBtn.textContent='Send reset code'}};
+    resetBtn.onclick=async()=>{const email=document.querySelector('#resetEmail').value.trim(),code=document.querySelector('#resetCode').value.trim(),password=document.querySelector('#newPassword').value;if(!/^[0-9]{6}$/.test(code))return message('Enter the 6-digit reset code.');if(password.length<8)return message('New password must be at least 8 characters.');resetBtn.disabled=true;resetBtn.textContent='Changing password...';try{await post('/api/reset-password',{email,code,password});message('Password changed successfully. You can now log in.',false);setTimeout(()=>view('login'),1200)}catch(e){message(e.message);resetBtn.disabled=false;resetBtn.textContent='Change password'}};
   </script>
 </body>
 </html>
