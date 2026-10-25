@@ -27,40 +27,34 @@ function scorePair(x){
 async function json(url){const r=await fetch(url,{headers:{Accept:"application/json"}});if(!r.ok)throw Error("Data source returned "+r.status);return r.json()}
 async function loadUniverse(){
  const t=token();
- if(!t){$("#status").innerHTML='Please <a class="green" href="/login?next=%2F">log in</a> or create a free account. Free accounts get 10 scanner uses.';return}
- $("#status").textContent="Loading live tokens, including Solana memecoins…";
+ if(!t){$("#status").innerHTML='Please <a class="green" href="/login?next=%2F">log in</a> or create a free account.';return}
+ $("#status").textContent="Discovering live memecoins across supported chains…";
  try{
   const gate=await fetch("/api/market?q=solana",{headers:{Authorization:"Bearer "+t}});
   const gj=await gate.json();
   if(gate.status===401){localStorage.removeItem("fomoToken");location.href="/login?next=%2F";return}
-  if(gate.status===402){$("#status").innerHTML='<b>'+esc(gj.error||"Free uses finished.")+'</b> <a href="/pricing.html">Choose Normal ($50) or VIP ($100)</a>';return}
+  if(gate.status===402){$("#status").innerHTML='<b>'+esc(gj.error||"Free uses finished.")+'</b> <a href="/pricing.html">View plans</a>';return}
   if(!gate.ok)throw Error(gj.error||"Scanner access unavailable");
-  // Search both general meme terms and Solana-native launch/pair terms.
-  const searches=["solana","solana meme","pump.fun","raydium","bonk","wif","dogwifhat","pump","pepe","doge","inu","cat","frog","moon","ai","trump","meme coin"];
-  const [boosts,profiles,...searchResults]=await Promise.all([
+  const searches=["solana","solana meme","solana memecoin","pump.fun","pumpfun","raydium","bonk","wif","dogwifhat","pump","pepe","doge","inu","cat","frog","moon","ai","trump","meme coin","memecoin","new pair","launch","degen","based","brett","mog","popcat","bome","myro","mew","wen","giga","goat","act","fwog","mother","retardio","slerf"," ponke","ethereum meme","base meme","bnb meme","shiba","floki","turbo","toshi","higher","aero"];
+  const [boosts,topBoosts,profiles,takeovers,...searchResults]=await Promise.all([
    json(DEX+"/token-boosts/latest/v1").catch(()=>[]),
+   json(DEX+"/token-boosts/top/v1").catch(()=>[]),
    json(DEX+"/token-profiles/latest/v1").catch(()=>[]),
-   ...searches.map(q=>json(DEX+"/latest/dex/search?q="+encodeURIComponent(q)).catch(()=>({pairs:[]})))
+   json(DEX+"/community-takeovers/latest/v1").catch(()=>[]),
+   ...searches.map(q=>json(DEX+"/latest/dex/search?q="+encodeURIComponent(q.trim())).catch(()=>({pairs:[]})))
   ]);
   const byKey=new Map();
   const add=x=>{if(x?.chainId&&x?.tokenAddress)byKey.set(x.chainId+":"+x.tokenAddress.toLowerCase(),{chainId:x.chainId,tokenAddress:x.tokenAddress,url:x.url})};
-  (Array.isArray(boosts)?boosts:[]).forEach(add);
-  (Array.isArray(profiles)?profiles:[]).forEach(add);
+  [boosts,topBoosts,profiles,takeovers].forEach(list=>(Array.isArray(list)?list:[]).forEach(add));
   searchResults.forEach(r=>(r?.pairs||[]).forEach(x=>add({chainId:x.chainId,tokenAddress:x.baseToken?.address,url:x.url})));
-  // Prioritize Solana addresses so a busy multi-chain feed cannot crowd them out.
   const candidates=[...byKey.values()].sort((a,b)=>(b.chainId==="solana")-(a.chainId==="solana"));
-  const groups={};
-  for(const x of candidates){(groups[x.chainId]??=[]).push(x.tokenAddress)}
-  const enriched=[];
-  const jobs=[];
+  const groups={};for(const x of candidates)(groups[x.chainId]??=[]).push(x.tokenAddress);
+  const enriched=[],jobs=[];
   for(const [chain,addresses] of Object.entries(groups)){
-   const cap=chain==="solana"?350:100;
+   const cap=chain==="solana"?750:250;
    for(let i=0;i<Math.min(addresses.length,cap);i+=25)jobs.push({chain,addresses:addresses.slice(i,i+25)});
   }
-  const results=await Promise.all(jobs.map(async job=>{
-   try{return await json(DEX+"/tokens/v1/"+encodeURIComponent(job.chain)+"/"+encodeURIComponent(job.addresses.join(",")))}
-   catch{return []}
-  }));
+  const results=await Promise.all(jobs.map(async job=>{try{return await json(DEX+"/tokens/v1/"+encodeURIComponent(job.chain)+"/"+encodeURIComponent(job.addresses.join(",")))}catch{return []}}));
   results.forEach((pairs,i)=>{
    const chain=jobs[i].chain,best=new Map();
    for(const p of Array.isArray(pairs)?pairs:[]){
@@ -70,18 +64,21 @@ async function loadUniverse(){
    for(const p of best.values())enriched.push(scorePair(p));
   });
   const merged=new Map();
-  [...enriched,...(gj.pairs||[]).map(scorePair)].forEach(x=>{
-   const k=x.chain+":"+x.address.toLowerCase(),old=merged.get(k);
-   if(!old||x.volume24h>old.volume24h)merged.set(k,x)
-  });
-  data=[...merged.values()].filter(x=>x.priceUsd>0).sort((a,b)=>(b.chain==="solana")-(a.chain==="solana")||b.fomo-a.fomo).slice(0,500);
+  [...enriched,...(gj.pairs||[]).map(scorePair)].forEach(x=>{const k=x.chain+":"+x.address.toLowerCase(),old=merged.get(k);if(!old||x.volume24h>old.volume24h)merged.set(k,x)});
+  data=[...merged.values()].filter(x=>x.priceUsd>0).sort((a,b)=>(b.chain==="solana")-(a.chain==="solana")||b.fomo-a.fomo).slice(0,1000);
   if(!data.length)throw Error("No live token data was returned. Tap refresh to retry.");
-  $("#status").innerHTML=(gj.paid?"Unlimited membership access":"Free uses remaining: <b>"+esc(gj.freeRemaining)+" / 10</b>")+" · "+data.length+" live tokens, Solana included · updated "+new Date().toLocaleTimeString();
+  $("#status").innerHTML=(gj.paid?"Unlimited membership access":"Free uses remaining: <b>"+esc(gj.freeRemaining)+" / 10</b>")+" · "+data.length+" discovered live pairs · Solana prioritized · updated "+new Date().toLocaleTimeString()+"<br><small>Feeds cover tokens found by public market sources; no single API lists every token.</small>";
   $("#chain").innerHTML='<option value="">All chains</option>'+[...new Set(data.map(x=>x.chain))].sort((a,b)=>(a==="solana"?-1:b==="solana"?1:a.localeCompare(b))).map(x=>'<option value="'+esc(x)+'">'+(x==="solana"?"Solana":esc(x))+'</option>').join("");
-  render();renderTradeSetups()
+  render();renderTradeSetups();loadTraderLeaderboard(t)
  }catch(e){console.error(e);$("#status").textContent=(e.message||"Market feed unavailable")+" — tap ↻ to retry."}
 }
-function render(){let q=$("#q").value.toLowerCase(),c=$("#chain").value,s=$("#sig").value,sort=$("#sort").value;let a=data.filter(x=>(!q||(x.name+x.symbol+x.address).toLowerCase().includes(q))&&(!c||x.chain===c)&&(!s||x.signal===s));a.sort((x,y)=>sort==="momentum"?y.momentum-x.momentum:sort==="volume"?y.volume24h-x.volume24h:sort==="change"?y.change24h-x.change24h:y.fomo-x.fomo);$("#coinFeed").innerHTML=a.slice(0,250).map(x=>'<article class="coin-row '+(selected?.address===x.address&&selected?.chain===x.chain?'selected':'')+'" data-key="'+esc(x.chain+":"+x.address)+'"><div class="coin-left"><div class="coin-logo '+(!x.image?'fallback':'')+'">'+(x.image?'<img src="'+esc(x.image)+'" alt="" class="coin-logo" onerror="this.outerHTML=\'<div class=&quot;coin-logo fallback&quot;>'+esc(x.symbol.slice(0,2))+'</div>\'">':esc(x.symbol.slice(0,2)))+'</div><div class="coin-copy"><div class="coin-title">'+esc(x.name)+' <span class="coin-chain">'+esc(x.chain)+'</span></div><div class="coin-sub">'+esc(x.symbol)+' · MC '+money(x.marketCap)+' · Vol '+money(x.volume24h)+'</div><div class="coin-extra"><span class="pill '+(x.signal==="Bullish"?"bull":x.signal==="High Risk"?"risk":"")+'">'+esc(x.signal)+'</span><span class="pill">FOMO '+x.fomo+'</span><span class="pill">Liq '+money(x.liquidityUsd)+'</span></div></div></div><div class="coin-right"><div class="coin-price">'+price(x.priceUsd)+'</div><div class="coin-change '+(x.change24h>=0?'green':'red')+'">'+(x.change24h>=0?'▲ +':'▼ ')+x.change24h.toFixed(2)+'%</div></div></article>').join("")||'<p class="muted">No tokens match these filters.</p>';$("#coinFeed").querySelectorAll(".coin-row").forEach(el=>el.onclick=()=>{const [chain,address]=el.dataset.key.split(":");const x=data.find(z=>z.chain===chain&&z.address.toLowerCase()===address.toLowerCase());if(x)showChart(x)});}
+function render(){
+ let q=$("#q").value.toLowerCase(),c=$("#chain").value,s=$("#sig").value,sort=$("#sort").value;
+ let a=data.filter(x=>(!q||(x.name+x.symbol+x.address).toLowerCase().includes(q))&&(!c||x.chain===c)&&(!s||x.signal===s));
+ a.sort((x,y)=>sort==="momentum"?y.momentum-x.momentum:sort==="volume"?y.volume24h-x.volume24h:sort==="change"?y.change24h-x.change24h:y.fomo-x.fomo);
+ $("#coinFeed").innerHTML=a.slice(0,500).map(x=>'<article class="coin-row '+(selected?.address===x.address&&selected?.chain===x.chain?'selected':'')+'" data-key="'+esc(x.chain+":"+x.address)+'"><div class="coin-left"><div class="coin-logo '+(!x.image?'fallback':'')+'">'+(x.image?'<img src="'+esc(x.image)+'" alt="" class="coin-logo" onerror="this.outerHTML=\'<div class=&quot;coin-logo fallback&quot;>'+esc(x.symbol.slice(0,2))+'</div>\'">':esc(x.symbol.slice(0,2)))+'</div><div class="coin-copy"><div class="coin-title">'+esc(x.name)+' <span class="coin-chain">'+esc(x.chain)+'</span></div><div class="coin-sub">'+esc(x.symbol)+' · MC '+money(x.marketCap)+' · Vol '+money(x.volume24h)+'</div><div class="coin-extra"><span class="pill '+(x.signal==="Bullish"?"bull":x.signal==="High Risk"?"risk":"")+'">'+esc(x.signal)+'</span><span class="pill">FOMO '+x.fomo+'</span><span class="pill">Liq '+money(x.liquidityUsd)+'</span></div><div class="coin-links"><a href="'+esc(x.url||"#")+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">DexScreener ↗</a>'+(x.chain==="solana"&&x.address?'<a href="https://axiom.trade/t/'+encodeURIComponent(x.address)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">Trade on Axiom ↗</a>':'')+'</div></div></div><div class="coin-right"><div class="coin-price">'+price(x.priceUsd)+'</div><div class="coin-change '+(x.change24h>=0?'green':'red')+'">'+(x.change24h>=0?'▲ +':'▼ ')+x.change24h.toFixed(2)+'%</div></div></article>').join("")||'<p class="muted">No tokens match these filters.</p>';
+ $("#coinFeed").querySelectorAll(".coin-row").forEach(el=>el.onclick=()=>{const [chain,address]=el.dataset.key.split(":");const x=data.find(z=>z.chain===chain&&z.address.toLowerCase()===address.toLowerCase());if(x)showChart(x)});
+}
 let activeTf="minute",activeAgg="5",priceChart=null,candleSeries=null,chartResizeObserver=null;
 const NETWORKS={ethereum:"eth",eth:"eth",bsc:"bsc",base:"base",solana:"solana",arbitrum:"arbitrum",optimism:"optimism",polygon:"polygon_pos",polygon_pos:"polygon_pos",avalanche:"avax",avax:"avax",fantom:"ftm",sonic:"sonic",sui:"sui",ton:"ton",aptos:"aptos",linea:"linea",blast:"blast",zksync:"zksync",scroll:"scroll",opbnb:"op_bnb",mantle:"mantle",cronos:"cronos"};
 function renderMarkedChart(x,ohlcv){
