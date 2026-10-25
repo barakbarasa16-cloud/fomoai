@@ -4,7 +4,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const money=n=>n>=1e9?"$"+(n/1e9).toFixed(2)+"B":n>=1e6?"$"+(n/1e6).toFixed(2)+"M":n>=1e3?"$"+(n/1e3).toFixed(1)+"K":"$"+Number(n||0).toFixed(0);
 const price=n=>Number(n||0)>=1?"$"+Number(n).toFixed(4):"$"+Number(n||0).toPrecision(5);
 const token=()=>localStorage.getItem("fomoToken");const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const SEARCHES=["meme","pepe","doge","inu","cat","frog","bonk","wif","shib","floki","moon","pump","ai","trump","sol","base","elon","dog","banana"];const DEX="https://api.dexscreener.com";
+const SEARCHES=["fomo","fomo meme","fomo coin","meme","pepe","doge","inu","cat","frog","bonk","wif","shib","floki","moon","pump","ai","trump","sol","base","elon","dog","banana"];const DEX="https://api.dexscreener.com";
 function scorePair(x){
  const ch=Number(x.priceChange?.h24||0),vol=Number(x.volume?.h24||0),liq=Number(x.liquidity?.usd||0);
  const buys=Number(x.txns?.h24?.buys||0),sells=Number(x.txns?.h24?.sells||0),total=buys+sells,ratio=total?buys/total:.5;
@@ -35,7 +35,7 @@ async function loadUniverse(){
   if(gate.status===401){localStorage.removeItem("fomoToken");location.href="/login?next=%2F";return}
   if(gate.status===402){$("#status").innerHTML='<b>'+esc(gj.error||"Free uses finished.")+'</b> <a href="/pricing.html">View plans</a>';return}
   if(!gate.ok)throw Error(gj.error||"Scanner access unavailable");
-  const searches=["solana","solana meme","solana memecoin","pump.fun","pumpfun","raydium","bonk","wif","dogwifhat","pump","pepe","doge","inu","cat","frog","moon","ai","trump","meme coin","memecoin","new pair","launch","degen","based","brett","mog","popcat","bome","myro","mew","wen","giga","goat","act","fwog","mother","retardio","slerf"," ponke","ethereum meme","base meme","bnb meme","shiba","floki","turbo","toshi","higher","aero"];
+  const searches=["solana","fomo","fomo meme","fomo memecoin","solana meme","solana memecoin","pump.fun","pumpfun","raydium","bonk","wif","dogwifhat","pump","pepe","doge","inu","cat","frog","moon","ai","trump","meme coin","memecoin","new pair","launch","degen","based","brett","mog","popcat","bome","myro","mew","wen","giga","goat","act","fwog","mother","retardio","slerf"," ponke","ethereum meme","base meme","bnb meme","shiba","floki","turbo","toshi","higher","aero"];
   const [boosts,topBoosts,profiles,takeovers,...searchResults]=await Promise.all([
    json(DEX+"/token-boosts/latest/v1").catch(()=>[]),
    json(DEX+"/token-boosts/top/v1").catch(()=>[]),
