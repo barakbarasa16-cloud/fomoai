@@ -9,7 +9,7 @@ import crypto from "crypto";
 
 dotenv.config();
 const app=express(),PORT=Number(process.env.PORT||3000),BASE_URL=process.env.BASE_URL||`http://localhost:${PORT}`;
-const db=new Database("fomoai.db");db.pragma("journal_mode=WAL");
+const DB_PATH=process.env.DB_PATH||"fomoai.db";const db=new Database(DB_PATH);db.pragma("journal_mode=WAL");
 db.exec(`CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,email TEXT UNIQUE,name TEXT,password_hash TEXT,plan TEXT DEFAULT 'Free',paid INTEGER DEFAULT 0,provider TEXT,free_uses INTEGER DEFAULT 0,created_at TEXT DEFAULT CURRENT_TIMESTAMP);CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,provider TEXT,external_id TEXT,amount REAL,currency TEXT,status TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP);CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT);CREATE TABLE IF NOT EXISTS password_resets(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,email TEXT,code_hash TEXT,expires_at INTEGER,used INTEGER DEFAULT 0,created_at INTEGER DEFAULT (unixepoch()));`);
 try{db.exec("ALTER TABLE users ADD COLUMN free_uses INTEGER DEFAULT 0")}catch{}
 const getS=db.prepare("SELECT value FROM settings WHERE key=?"),setS=db.prepare("INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value");
