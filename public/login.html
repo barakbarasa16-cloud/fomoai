@@ -6,34 +6,37 @@
   <title>FOMOAI Account</title>
   <link rel="stylesheet" href="/style.css">
   <style>
-/* FOMOAI app-style account screen */
 :root{color-scheme:dark}
-html,body.account-page{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;color:#f3f7fb!important;background:#050c13!important}
-body.account-page{min-height:100vh!important;background:radial-gradient(ellipse at 8% 8%,rgba(0,255,163,.16),transparent 34%),radial-gradient(ellipse at 100% 25%,rgba(40,112,255,.2),transparent 38%),#050c13!important}
-.account-page *{box-sizing:border-box}
-.account-header{height:68px!important;padding:0 20px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;background:rgba(6,15,24,.9)!important;border-bottom:1px solid rgba(82,242,185,.16)!important;backdrop-filter:blur(18px)}
-.account-header .brand{font-size:24px!important;font-weight:950!important;letter-spacing:-1.3px!important;color:#f6fbff!important}
-.account-header .brand i{font-style:normal!important;color:#50f0b0!important}
-.account-home{font-size:11px!important;font-weight:800!important;color:#b5c9d7!important;padding:9px 12px!important;border:1px solid #263b49!important;border-radius:10px!important}
-.account-main{width:100%!important;min-height:calc(100vh - 68px)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:32px 16px 48px!important}
-.loginbox{width:100%!important;max-width:430px!important;margin:0 auto!important;padding:clamp(23px,6vw,34px)!important;border-radius:24px!important;border:1px solid rgba(87,231,185,.22)!important;background:linear-gradient(145deg,rgba(12,29,35,.98),rgba(9,20,37,.98))!important;box-shadow:0 25px 75px rgba(0,0,0,.4),0 0 45px rgba(0,224,151,.045)!important}
-.account-mark{width:48px!important;height:48px!important;display:grid!important;place-items:center!important;margin:0 0 17px!important;border-radius:15px!important;background:linear-gradient(135deg,#6bffc4,#5bb5ff)!important;color:#06241b!important;font-size:25px!important;font-weight:900!important;box-shadow:0 8px 28px rgba(46,235,176,.16)!important}
-.account-kicker{margin:0 0 8px!important;color:#58eab3!important;font-size:10px!important;font-weight:900!important;letter-spacing:.2em!important}
-.loginbox .eyebrow{display:block!important;margin:0 0 7px!important;color:#8da7b8!important;font-size:10px!important;letter-spacing:.18em!important;font-weight:850!important}
-.loginbox h1{margin:0 0 12px!important;font-size:35px!important;line-height:1.1!important;letter-spacing:-1.3px!important;font-weight:850!important;color:#f5fbff!important}
-.loginbox .muted{margin:0 0 22px!important;color:#a3b6c4!important;font-size:13px!important;line-height:1.65!important}
-.loginbox .intro-copy b{color:#65f2ba!important}
-.loginbox label{display:block!important;margin:16px 0 7px!important;color:#dce8ef!important;font-size:12px!important;font-weight:750!important}
-.loginbox input,.loginbox select{display:block!important;width:100%!important;max-width:100%!important;min-height:49px!important;margin:0!important;padding:13px 14px!important;border-radius:12px!important;border:1px solid #2b4554!important;background:#08141f!important;color:#f5fbff!important;font-size:14px!important;outline:none!important;box-shadow:none!important}
-.loginbox input::placeholder{color:#657d8d!important}
-.loginbox input:focus,.loginbox select:focus{border-color:#47e8b2!important;box-shadow:0 0 0 3px rgba(71,232,178,.12)!important}
-.loginbox button.btn{width:100%!important;min-height:47px!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:10px 0 0!important;padding:12px 16px!important;border-radius:12px!important;font-size:13px!important;font-weight:850!important;cursor:pointer!important}
-.loginbox button.primary{margin-top:22px!important;border:0!important;color:#04251c!important;background:linear-gradient(100deg,#65f2ba,#66caff)!important;box-shadow:0 8px 25px rgba(52,223,171,.15)!important}
-.loginbox button.ghost{color:#c7d7e2!important;background:#10212b!important;border:1px solid #263e4b!important}
-#forgotBtn{color:#9eb4c3!important;background:transparent!important;border-color:transparent!important}
-#msg{margin:14px 0 0!important;font-size:12px!important}
-#msg:empty{display:none!important}
-@media(max-width:420px){.account-header{height:62px!important;padding:0 14px!important}.account-header .brand{font-size:22px!important}.account-home{font-size:10px!important;padding:8px 9px!important}.account-main{min-height:calc(100vh - 62px)!important;padding:24px 13px 35px!important;align-items:flex-start!important}.loginbox{padding:23px 19px!important;border-radius:21px!important}.loginbox h1{font-size:32px!important}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f3fbff;background:#04151b}
+body.account-page{min-height:100vh;background:radial-gradient(ellipse at 5% 0%,rgba(0,242,153,.22),transparent 36%),radial-gradient(ellipse at 100% 25%,rgba(30,126,255,.24),transparent 40%),linear-gradient(145deg,#031b17 0%,#061d32 55%,#071321 100%);background-attachment:fixed}
+.account-page a{text-decoration:none}
+.account-header{height:70px;padding:0 clamp(16px,5vw,60px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(76,240,186,.22);background:rgba(3,19,26,.78);backdrop-filter:blur(18px)}
+.account-header .brand{font-size:25px;font-weight:950;letter-spacing:-1.4px;color:#f6ffff}
+.account-header .brand i{color:#55f0b5;font-style:normal}
+.account-home{font-size:12px;font-weight:800;color:#c9e9ef;padding:10px 13px;border:1px solid rgba(94,208,222,.3);border-radius:12px;background:rgba(5,56,64,.38)}
+.account-main{width:100%;min-height:calc(100vh - 70px);display:flex;align-items:center;justify-content:center;padding:36px 16px 52px}
+.loginbox{width:100%;max-width:440px;margin:0 auto;padding:clamp(23px,6vw,36px);border-radius:25px;border:1px solid rgba(77,235,185,.3);background:linear-gradient(145deg,rgba(5,42,37,.96),rgba(7,30,54,.97));box-shadow:0 26px 80px rgba(0,0,0,.42),0 0 42px rgba(0,219,154,.08);backdrop-filter:blur(18px)}
+.account-mark{width:50px;height:50px;display:grid;place-items:center;margin:0 0 18px;border-radius:16px;background:linear-gradient(135deg,#5ff4b4,#57bdff);color:#04271c;font-size:25px;font-weight:900;box-shadow:0 8px 28px rgba(52,237,176,.22)}
+.account-kicker{margin:0 0 9px;color:#62efb7;font-size:10px;font-weight:900;letter-spacing:.2em}
+.loginbox .eyebrow{display:block;margin:0 0 8px;color:#92c5d2;font-size:10px;letter-spacing:.18em;font-weight:850}
+.loginbox h1{margin:0 0 13px;font-size:clamp(31px,8vw,38px);line-height:1.1;letter-spacing:-1.3px;font-weight:900;color:#f5fcff}
+.loginbox .muted{margin:0 0 23px;color:#b2cbd5;font-size:14px;line-height:1.65}
+.loginbox .intro-copy b{color:#70f4bd}
+.loginbox label{display:block;margin:16px 0 8px;color:#e0f4f5;font-size:12px;font-weight:800}
+.loginbox input,.loginbox select{display:block;width:100%;max-width:100%;min-height:49px;margin:0;padding:13px 14px;border-radius:12px;border:1px solid #28645f;background:#061a26;color:#f5fcff;font-size:14px;outline:none;box-shadow:none;transition:border-color .2s,box-shadow .2s}
+.loginbox input::placeholder{color:#76949e}
+.loginbox input:focus,.loginbox select:focus{border-color:#4deab4;box-shadow:0 0 0 3px rgba(77,234,180,.14)}
+.loginbox button.btn{width:100%;min-height:47px;display:flex;align-items:center;justify-content:center;margin:10px 0 0;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:850;cursor:pointer;transition:transform .15s,filter .15s}
+.loginbox button.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.loginbox button.btn:disabled{opacity:.62;cursor:wait}
+.loginbox button.primary{margin-top:22px;border:0;color:#03251d;background:linear-gradient(100deg,#61f2b5,#58c7ff);box-shadow:0 9px 25px rgba(41,221,167,.2)}
+.loginbox button.ghost{color:#d0edf0;background:linear-gradient(110deg,rgba(4,92,73,.34),rgba(13,65,110,.34));border:1px solid rgba(87,207,211,.26)}
+#forgotBtn{color:#a6d8df;background:transparent;border-color:transparent}
+#msg{margin:14px 0 0;font-size:12px;line-height:1.5}
+#msg:empty{display:none}
+@media(max-width:420px){.account-header{height:64px;padding:0 14px}.account-header .brand{font-size:23px}.account-home{font-size:10px;padding:9px 10px}.account-main{min-height:calc(100vh - 64px);padding:25px 13px 34px;align-items:flex-start}.loginbox{padding:23px 19px;border-radius:21px}.loginbox h1{font-size:32px}}
+@media(min-width:760px){.account-main{padding-top:48px;padding-bottom:64px}}
 </style>
 </head>
 <body class="account-page">
