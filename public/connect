@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FOMO App Connection</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#07080d;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.card{width:min(92%,520px);padding:38px;border:1px solid #26333b;border-radius:28px;background:linear-gradient(145deg,#11151d,#0b0e14);text-align:center;box-shadow:0 30px 100px #0009}.logo{width:70px;height:70px;margin:0 auto 20px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,#61f2b5,#58c7ff);color:#06110e;font-weight:1000;font-size:24px}h1{margin:0 0 10px;font-size:30px}p{margin:0;color:#a8b0ba;line-height:1.6}.status{display:flex;align-items:center;justify-content:center;gap:9px;margin:24px 0;padding:14px;border-radius:14px;background:#101a18;color:#8ff5c9;font-weight:800}.dot{width:9px;height:9px;border-radius:50%;background:#61f2b5;box-shadow:0 0 14px #61f2b5}.actions{display:grid;gap:10px;margin-top:18px}a{display:block;padding:15px;border-radius:14px;text-decoration:none;font-weight:900;background:linear-gradient(100deg,#61f2b5,#58c7ff);color:#041b15}a.secondary{background:#1a1e27;color:#fff;border:1px solid #2b333d}.small{margin-top:18px;font-size:13px;color:#707984}
+</style>
+</head>
+<body>
+<main class="card">
+<div class="logo">F</div>
+<h1>FOMO App Connected</h1>
+<p>FOMOAI is now connected to the FOMO app experience. Continue to your live FOMO dashboard using your current account session.</p>
+<div class="status"><span class="dot"></span> Connection ready</div>
+<div class="actions"><a href="/">Open FOMO App</a><a class="secondary" href="/login?next=%2Fconnect%3Fapp%3Dfomo">Sign in to FOMOAI</a></div>
+<div class="small">FOMOAI • FOMO app connection</div>
+</main>
+<script>const next=new URLSearchParams(location.search).get('next');if(next==='dashboard')setTimeout(()=>location.href='/',1200);</script>
+</body>
+</html>
