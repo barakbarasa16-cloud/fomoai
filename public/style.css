@@ -71,3 +71,26 @@ footer{border-top-color:#164c4e}
 #msg:empty{display:none}
 @media(min-width:760px){.account-main{align-items:center;padding-top:42px;padding-bottom:64px}.loginbox{max-width:450px}}
 @media(max-width:420px){.account-header{height:64px;padding:0 15px}.account-header .brand{font-size:23px}.account-home{font-size:11px;padding:9px 10px}.account-main{min-height:calc(100vh - 64px);padding:28px 14px 38px}.loginbox{border-radius:20px;padding:23px 19px}.loginbox h1{font-size:31px}}
+
+
+/* Expanded discovery, Axiom shortcuts and trader leaderboard */
+.coin-links{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.coin-links a,.trader-link{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border:1px solid rgba(89,226,190,.25);border-radius:9px;color:#aef4dc;background:rgba(5,75,65,.28);font-size:11px;font-weight:800;text-decoration:none}
+.coin-links a:hover,.trader-link:hover{border-color:#61f2b5;background:rgba(14,126,98,.28)}
+.traders-section{margin-top:36px}
+.trader-window{display:flex;flex-direction:column;gap:6px;min-width:105px;color:#a9c8d1;font-size:11px}
+.trader-window select{border:1px solid #285d64;border-radius:10px;background:#071c2a;color:#effaff;padding:10px}
+.trader-table-wrap{width:100%;overflow-x:auto;border:1px solid rgba(79,215,185,.2);border-radius:16px;background:rgba(4,24,34,.72)}
+.trader-table{width:100%;border-collapse:collapse;min-width:590px;text-align:left}
+.trader-table th,.trader-table td{padding:13px 12px;border-bottom:1px solid rgba(107,164,175,.13);font-size:12px;white-space:nowrap}
+.trader-table th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8eafb9;background:rgba(3,18,28,.55)}
+.trader-table td{color:#d9edf0}
+.trader-table tr:last-child td{border-bottom:0}
+.trader-name{font-weight:850;color:#f2ffff}
+.trader-handle{display:block;color:#87aab5;font-size:10px;margin-top:4px}
+.trader-pnl-positive{color:#69f0b3!important;font-weight:850}
+.trader-pnl-negative{color:#ff8a8a!important;font-weight:850}
+.trader-wallet{color:#7ad9ff;text-decoration:none;font-weight:800}
+.trader-actions{display:flex;flex-wrap:wrap;gap:9px;margin:15px 0}
+.trader-link.secondary{background:rgba(12,58,93,.35);border-color:rgba(83,175,255,.25);color:#a6d9ff}
+@media(max-width:520px){.trader-table th,.trader-table td{padding:11px 9px}.trader-window{min-width:90px}.coin-links a{font-size:10px;padding:6px 8px}}
