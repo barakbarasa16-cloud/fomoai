@@ -130,4 +130,31 @@ function setupFor(x){
  return {...x,quality,tradable,action:tradable?"ENTRY WATCH":"WAIT / NO ENTRY",entryLow:p*(x.momentum>=78?.985:.97),entryHigh:p*(x.momentum>=78?1.005:1.015),stop:p*(x.risk==="Lower"?.93:x.risk==="Medium"?.91:.88),tp1:p*1.10,tp2:p*1.20,tp3:p*1.35,reasons:[...x.reasons,...(x.liquidityUsd<50000?["thin liquidity"]:[])].slice(0,4)};
 }
 function renderTradeSetups(){const grid=$("#setupGrid");if(!grid||!data.length)return;const ranked=data.map(setupFor).sort((a,b)=>((b.tradable?1000:0)+b.quality+b.momentum+b.fomo)-((a.tradable?1000:0)+a.quality+a.momentum+a.fomo)).slice(0,3);$("#nextReview").textContent=new Date(Date.now()+15*60000).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});grid.innerHTML=ranked.map(x=>'<div class="card"><span class="eyebrow">'+(x.tradable?"TRADE CANDIDATE":"RISK FILTER")+'</span><h3>'+esc(x.name)+' ('+esc(x.symbol)+')</h3><p>'+esc(x.chain)+' · Quality '+x.quality+'/100 · '+x.confidence+'% model confidence</p><div class="statline"><span>Current</span><b>'+price(x.priceUsd)+'</b></div><div class="statline"><span>Entry zone</span><b>'+price(x.entryLow)+' – '+price(x.entryHigh)+'</b></div><div class="statline"><span>Stop / invalidation</span><b class="red">'+price(x.stop)+'</b></div><div class="statline"><span>TP1 / TP2 / TP3</span><b>'+price(x.tp1)+' / '+price(x.tp2)+' / '+price(x.tp3)+'</b></div><div class="statline"><span>Buy pressure</span><b>'+x.buyPressure+'%</b></div><p><b>Safety:</b> '+(x.liquidityUsd>=50000?"sufficient public liquidity for this screen":"thin liquidity")+'; contract/honeypot checks remain unverified.</p><p><b>Why:</b> '+esc(x.reasons.join(" · "))+'</p><p>Review if momentum weakens or selling pressure overtakes buyers. Targets and stops are estimates, not guaranteed outcomes.</p><a class="green" href="'+esc(x.url||"#")+'" target="_blank" rel="noopener">Open live pair ↗</a></div>').join("")}
+async function loadTraderLeaderboard(authToken=token()){
+ const rows=$("#traderRows"),status=$("#traderStatus"),period=$("#traderWindow")?.value||"30d";
+ if(!rows||!status)return;
+ status.textContent="Loading public Solana trader rankings…";
+ rows.innerHTML='<tr><td colspan="5">Loading trader data…</td></tr>';
+ try{
+  const r=await fetch("/api/traders?window="+encodeURIComponent(period),{headers:{Authorization:"Bearer "+authToken},cache:"no-store"});
+  const payload=await r.json();
+  if(r.status===401){localStorage.removeItem("fomoToken");location.href="/login?next=%2F";return}
+  if(!r.ok)throw Error(payload.error||"Trader leaderboard unavailable");
+  const traders=Array.isArray(payload.traders)?payload.traders:[];
+  if(!traders.length)throw Error("No trader rows were returned by the data provider.");
+  const fmtUsd=n=>{const v=Number(n||0);return (v<0?"−":"+")+"$"+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0})};
+  rows.innerHTML=traders.slice(0,100).map((x,i)=>{
+   const wallet=String(x.address||x.walletAddress||x.wallet||"");
+   const handle=x.handle||x.username||x.displayName||("Trader "+(x.rank||i+1));
+   const pnl=x.realizedPnlUsd??x.realizedPnl??x.pnlUsd??x.pnl;
+   const ret=x.returnPct??x.roiPct;
+   const rank=Number(x.rank||i+1);
+   return '<tr><td><span class="trader-name">#'+rank+' '+esc(handle)+'</span><span class="trader-handle">'+esc(x.displayName&&x.displayName!==handle?"@"+handle:(x.identityConfidence?"Verified identity":"Public wallet ranking"))+'</span></td><td class="'+(Number(pnl)>=0?"trader-pnl-positive":"trader-pnl-negative")+'">'+(pnl==null?"—":fmtUsd(pnl))+'</td><td>'+(ret==null?"—":(Number(ret)>=0?"+":"")+Number(ret).toFixed(1)+"%")+'</td><td>'+Number(x.trades||0).toLocaleString()+'</td><td>'+(wallet?'<a class="trader-wallet" target="_blank" rel="noopener" href="https://solscan.io/account/'+encodeURIComponent(wallet)+'">'+esc(wallet.slice(0,4)+"…"+wallet.slice(-4))+' ↗</a>':'—')+'</td></tr>'
+  }).join("");
+  status.textContent="Showing "+traders.length+" public Solana trader"+(traders.length===1?"":"s")+" · "+period+" realized PnL"+(payload.capturedAt?" · data captured "+new Date(payload.capturedAt).toLocaleString():"")+".";
+  if(!payload.fullLeaderboardEnabled)status.innerHTML+=" <span class=\"muted\">Public mode is limited to 10 rows. Configure FOMO_TRADER_API_KEY in Render to enable up to 100.</span>";
+ }catch(e){console.error(e);status.textContent=e.message||"Trader leaderboard unavailable";rows.innerHTML='<tr><td colspan="5">Could not load the leaderboard. Use the Axiom Top 100 link below to view its live trader page.</td></tr>'}
+}
+$("#traderWindow")?.addEventListener("change",()=>loadTraderLeaderboard());
+
 loadUniverse();
