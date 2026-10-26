@@ -9,51 +9,12 @@
   const setMeta=(x,p,stream=true)=>{const el=document.querySelector("#chartMeta");if(el)el.textContent=(stream?"LIVE ⚡":"LIVE")+" • "+x.chain+" · "+price(p)+" · "+(Number(x.change24h)>=0?"+":"")+Number(x.change24h||0).toFixed(2)+"% 24h · tick "+new Date().toLocaleTimeString()};
   const setFacts=(x,p)=>{const f=document.querySelector("#chartFacts");if(!f||typeof setupFor!=="function")return;const s=setupFor({...x,priceUsd:p});f.innerHTML=[["LIVE price",price(p)],["24h volume",money(x.volume24h)],["Liquidity",money(x.liquidityUsd)],["Buy pressure",x.buyPressure+"%"],["Entry zone",price(s.entryLow)+" – "+price(s.entryHigh)],["Stop loss",price(s.stop)],["Take profit 1",price(s.tp1)],["Take profit 2 / 3",price(s.tp2)+" / "+price(s.tp3)]].map(([k,v])=>'<div class="fact"><small>'+k+'</small><b>'+v+'</b></div>').join("")};
   const updateRow=(x,p)=>{try{const row=document.querySelector('.coin-row[data-key="'+CSS.escape(x.chain+":"+x.address)+'"]');if(!row)return;const pe=row.querySelector('.coin-price'),ce=row.querySelector('.coin-change');if(pe)pe.textContent=price(p);if(ce){const ch=Number(x.change24h||0);ce.textContent=(ch>=0?'▲ +':'▼ ')+ch.toFixed(2)+'%';ce.classList.toggle('green',ch>=0);ce.classList.toggle('red',ch<0)}}catch{}};
-  const candleFromTick=(p,unixTime)=>{
-    const now=Number(unixTime)||Math.floor(Date.now()/1000);
-    const bucket=activeTf==="hour"?(Number(activeAgg)||1)*3600:(Number(activeAgg)||5)*60;
-    const bt=Math.floor(now/bucket)*bucket;
-    let last=window.__fomoLiveLastCandle;
-    if(!last||last.time!==bt)last={time:bt,open:p,high:p,low:p,close:p};
-    else last={time:bt,open:Number(last.open)||p,high:Math.max(Number(last.high)||p,p),low:Math.min(Number(last.low)||p,p),close:p};
-    window.__fomoLiveLastCandle=last;
-    try{window.candleSeries?.update(last)}catch{window.__fomoLiveLastCandle={time:bt,open:p,high:p,low:p,close:p};window.candleSeries?.update(window.__fomoLiveLastCandle)}
-  };
-  async function getPair(x){
-    let j=await liveJson(DEX+"/latest/dex/pairs/"+encodeURIComponent(x.chain)+"/"+encodeURIComponent(x.pairAddress)).catch(()=>null),p=j?.pairs?.[0];
-    if(!p&&x.address){j=await liveJson(DEX+"/latest/dex/tokens/"+encodeURIComponent(x.address)).catch(()=>null);const ps=Array.isArray(j?.pairs)?j.pairs:[];p=ps.filter(q=>String(q.chainId).toLowerCase()===String(x.chain).toLowerCase()).sort((a,b)=>Number(b.liquidity?.usd||0)-Number(a.liquidity?.usd||0))[0]||ps[0]}
-    return p;
-  }
-  async function poll(x,myGen){
-    if(!x||!window.candleSeries||myGen!==generation)return;
-    try{const pair=await getPair(x),p=Number(pair?.priceUsd||0);if(!p)throw Error("No fresh price");candleFromTick(p);const fresh={...x,priceUsd:p,change24h:Number(pair.priceChange?.h24??x.change24h),volume24h:Number(pair.volume?.h24??x.volume24h),liquidityUsd:Number(pair.liquidity?.usd??x.liquidityUsd),pairAddress:pair.pairAddress||x.pairAddress};setMeta(fresh,p,false);setFacts(fresh,p);const idx=data.findIndex(z=>z.chain===x.chain&&z.address.toLowerCase()===x.address.toLowerCase());if(idx>=0){data[idx]=fresh;selected=data[idx]}updateRow(fresh,p)}catch(e){console.warn("REST live fallback failed",e)}
-  }
-  const openWs=(x,myGen)=>{
-    if(!x||x.chain!="solana"||!window.WebSocket||!window.candleSeries)return false;
-    closeWs();
-    const proto=location.protocol==="https:"?"wss":"ws";const url=proto+"://"+location.host+"/ws";
-    try{ws=new WebSocket(url)}catch{return false}
-    wsAddress=x.address;let received=false;
-    ws.onopen=()=>{if(myGen!==generation)return;ws.send(JSON.stringify({action:"subscribe",address:x.address}));};
-    ws.onmessage=e=>{if(myGen!==generation)return;try{const msg=JSON.parse(e.data);if(msg.type==="PRICE_DATA"){const d=msg.data||{},p=Number(d.c||d.price||d.value||0);if(!p)return;received=true;candleFromTick(p,d.unixTime);const fresh={...x,priceUsd:p,change24h:Number(x.change24h||0)};setMeta(fresh,p,true);setFacts(fresh,p);const idx=data.findIndex(z=>z.chain===x.chain&&z.address.toLowerCase()===x.address.toLowerCase());if(idx>=0){data[idx].priceUsd=p;selected=data[idx]}updateRow(fresh,p)}else if(msg.type==="STATUS"&&msg.connected===false&&!received){if(myGen===generation){poll(x,myGen);timer=setInterval(()=>poll(selected||x,myGen),FALLBACK_POLL_MS)}}}catch{}};
-    ws.onclose=()=>{if(myGen===generation&&!received){poll(x,myGen);timer=setInterval(()=>poll(selected||x,myGen),FALLBACK_POLL_MS)}};
-    ws.onerror=()=>{};
-    return true;
-  };
+  const candleFromTick=(p,unixTime)=>{const now=Number(unixTime)||Math.floor(Date.now()/1000),bucket=activeTf==="hour"?(Number(activeAgg)||1)*3600:(Number(activeAgg)||1)*60,bt=Math.floor(now/bucket)*bucket;let last=window.__fomoLiveLastCandle;if(!last||last.time!==bt)last={time:bt,open:p,high:p,low:p,close:p};else last={time:bt,open:Number(last.open)||p,high:Math.max(Number(last.high)||p,p),low:Math.min(Number(last.low)||p,p),close:p};window.__fomoLiveLastCandle=last;try{window.candleSeries?.update(last)}catch{window.__fomoLiveLastCandle={time:bt,open:p,high:p,low:p,close:p};window.candleSeries?.update(window.__fomoLiveLastCandle)}};
+  async function getPair(x){let j=await liveJson(DEX+"/latest/dex/pairs/"+encodeURIComponent(x.chain)+"/"+encodeURIComponent(x.pairAddress)).catch(()=>null),p=j?.pairs?.[0];if(!p&&x.address){j=await liveJson(DEX+"/latest/dex/tokens/"+encodeURIComponent(x.address)).catch(()=>null);const ps=Array.isArray(j?.pairs)?j.pairs:[];p=ps.filter(q=>String(q.chainId).toLowerCase()===String(x.chain).toLowerCase()).sort((a,b)=>Number(b.liquidity?.usd||0)-Number(a.liquidity?.usd||0))[0]||ps[0]}return p}
+  async function poll(x,myGen){if(!x||!window.candleSeries||myGen!==generation)return;try{const pair=await getPair(x),p=Number(pair?.priceUsd||0);if(!p)throw Error("No fresh price");candleFromTick(p);const fresh={...x,priceUsd:p,change24h:Number(pair.priceChange?.h24??x.change24h),volume24h:Number(pair.volume?.h24??x.volume24h),liquidityUsd:Number(pair.liquidity?.usd??x.liquidityUsd),pairAddress:pair.pairAddress||x.pairAddress};setMeta(fresh,p,false);setFacts(fresh,p);updateRow(fresh,p)}catch(e){console.warn("REST live fallback failed",e)}}
+  const openWs=(x,myGen)=>{if(!x||x.chain!="solana"||!window.WebSocket||!window.candleSeries)return false;closeWs();const proto=location.protocol==="https:"?"wss":"ws",url=proto+"://"+location.host+"/ws";try{ws=new WebSocket(url)}catch{return false}wsAddress=x.address;let received=false;ws.onopen=()=>{if(myGen!==generation)return;ws.send(JSON.stringify({action:"subscribe",address:x.address}))};ws.onmessage=e=>{if(myGen!==generation)return;try{const msg=JSON.parse(e.data);if(msg.type==="PRICE_DATA"){const d=msg.data||{},p=Number(d.c||d.price||d.value||0);if(!p)return;received=true;candleFromTick(p,d.unixTime);setMeta(x,p,true);setFacts(x,p);updateRow(x,p)}else if(msg.type==="STATUS"&&msg.connected===false&&!received){if(myGen===generation){poll(x,myGen);timer=setInterval(()=>poll(window.__fomoSelected||x,myGen),FALLBACK_POLL_MS)}}}catch{}};ws.onclose=()=>{if(myGen===generation&&!received){poll(x,myGen);timer=setInterval(()=>poll(window.__fomoSelected||x,myGen),FALLBACK_POLL_MS)}};ws.onerror=()=>{};return true};
   const originalLoadCandles=window.loadCandles;
-  window.loadCandles=async function(x){
-    stop();
-    if(originalLoadCandles)await originalLoadCandles(x);
-    if(selected&&selected.address.toLowerCase()===x.address.toLowerCase()&&selected.chain===x.chain&&window.candleSeries){
-      const myGen=generation;
-      await poll(x,myGen);
-      openWs(x,myGen);
-      metadataTimer=setInterval(()=>{if(selected&&myGen===generation)poll(selected,myGen)},15000);
-    }
-  };
-  document.addEventListener("click",e=>{
-    if(e.target?.id==="closeChart")setTimeout(stop,0);
-    if(e.target?.matches?.("[data-tf]"))setTimeout(()=>{if(selected&&window.candleSeries){stop();const g=generation;poll(selected,g);openWs(selected,g);metadataTimer=setInterval(()=>{if(selected&&g===generation)poll(selected,g)},15000)}},300);
-  });
+  window.loadCandles=async function(x){stop();window.__fomoSelected=x;window.__fomoLiveLastCandle=null;if(originalLoadCandles)await originalLoadCandles(x);if(window.__fomoSelected&&window.__fomoSelected.address.toLowerCase()===x.address.toLowerCase()&&window.__fomoSelected.chain===x.chain&&window.candleSeries){const myGen=generation;await poll(x,myGen);openWs(x,myGen);metadataTimer=setInterval(()=>{if(window.__fomoSelected&&myGen===generation)poll(window.__fomoSelected,myGen)},15000)}};
+  document.addEventListener("click",e=>{if(e.target?.id==="closeChart")setTimeout(()=>{stop();window.__fomoSelected=null},0);if(e.target?.matches?.("[data-tf]"))setTimeout(()=>{if(window.__fomoSelected&&window.candleSeries){stop();const g=generation;poll(window.__fomoSelected,g);openWs(window.__fomoSelected,g);metadataTimer=setInterval(()=>{if(g===generation)poll(window.__fomoSelected,g)},15000)}},300)});
   window.addEventListener("beforeunload",stop);
 })();
